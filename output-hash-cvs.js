@@ -72,7 +72,7 @@ fs.readFile(inputCSVFile, "utf8", (err, data) => {
         },
       ],
     };
-    // if (i === 1) console.log(obj); // prints the CHIP-0007 JSON format of the first row
+    // if (i === 1) console.log(JSON.stringify(obj)); // prints the CHIP-0007 JSON format of the first row
     const hash = crypto
       .createHash("sha256")
       .update(JSON.stringify(obj))
