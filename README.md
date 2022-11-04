@@ -59,6 +59,8 @@ Takes the CSV provided by the teams, and generates a CHIP-0007 compatible json, 
   }
 }
 ```
+## Preview of the `HNGi9 CSV FILE - Sheet1.output.cvs` file
+![output_preview](output_preview.png)
 
 ## Usage
 - Paste the CSV file in the root directory.
