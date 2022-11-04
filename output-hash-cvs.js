@@ -1,33 +1,37 @@
-const fs = require("fs");
-const crypto = require("crypto");
+const fs = require("fs"); // imports the built in file system module
+const crypto = require("crypto"); // imports the built in crypto module
 
-const inputCSVFile = `${__dirname}/HNGi9 CSV FILE - Sheet1.csv`;
-const outputCSVFile = `${__dirname}/HNGi9 CSV FILE - Sheet1.output.csv`;
+const inputCSVFile = `${__dirname}/HNGi9 CSV FILE - Sheet1.csv`; // the CSV file provided by the teams
+const outputCSVFile = `${__dirname}/HNGi9 CSV FILE - Sheet1.output.csv`; // the CSV file to be generated or updated with the sha256 hashes
 
-const genAttrObj = (str) => {
-  const obj = {};
-  const attributes = str.split(", ");
-  attributes.forEach((attr) => {
+// A function that parses the attributes string and returns an array of objects (the attributes)
+const genAttrArr = (str) => {
+  const attributes = str.split("; ");
+  const arr = attributes.map((attr) => {
     attr_kv = attr.split(": ");
-    obj[attr_kv[0]] = attr_kv[1];
+    const obj = {};
+    obj.trait_type = attr_kv[0];
+    obj.value = attr_kv[1];
+    return obj;
   });
-  return obj;
+  return arr;
 };
 
-const getSeriesTotal = (arr) => {
-  let total = 0;
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i].includes(",,,,,,")) continue;
-    total += 1;
-  }
-  return total;
-};
+// const getSeriesTotal = (arr) => {
+//   let total = 0;
+//   for (let i = 1; i < arr.length; i++) {
+//     if (arr[i].includes(",,,,,,")) continue;
+//     total += 1;
+//   }
+//   return total;
+// };
 
 fs.readFile(inputCSVFile, "utf8", (err, data) => {
   if (err) return err;
   const array = data.split("\r"); // splits the data by carriage return
-  const series_total = getSeriesTotal(array); // gets the series total
+  const series_total = array.length - 1; // gets the series total from the length of the array minus the headers row
   array[0] = array[0] + ",Hash"; // Adds the Hash column
+  let TEAM_NAME = "";
   for (let i = 1; i < array.length; i++) {
     // loops over the remaining rows (basically excluding the headers)
     const obj = {};
@@ -49,20 +53,26 @@ fs.readFile(inputCSVFile, "utf8", (err, data) => {
       if (char !== '"') formattedRowStr += char;
     }
     const properties = formattedRowStr.split("|"); // spliting row string by |
+    TEAM_NAME = properties[0].slice(1) || TEAM_NAME; // Setting the current team name
     obj.format = "CHIP-0007";
-    obj.name = properties[1];
-    obj.description = properties[3];
-    obj.minting_tool = properties[-1] || "";
-    obj.sensitive_content = properties[-1] || false;
-    obj.series_number = properties[0].slice(1);
+    obj.name = properties[2];
+    obj.description = properties[4];
+    obj.minting_tool = TEAM_NAME;
+    obj.sensitive_content = false;
+    obj.series_number = properties[1];
     obj.series_total = series_total;
-    obj.attributes = genAttrObj(properties[5]);
+    obj.attributes = genAttrArr(properties[6]);
     obj.collection = {
-      name: properties[1],
-      id: properties[6],
-      attributes: [],
+      name: "Zuri NFT Tickets for Free Lunch",
+      id: "b774f676-c1d5-422e-beed-00ef5510c64d",
+      attributes: [
+        {
+          type: "description",
+          value: "Rewards for accomplishments during HNGi9.",
+        },
+      ],
     };
-    obj.data = { example_data: properties[-1] || "" };
+    // if (i === 1) console.log(obj); // prints the CHIP-0007 JSON format of the first row
     const hash = crypto
       .createHash("sha256")
       .update(JSON.stringify(obj))
